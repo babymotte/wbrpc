@@ -1,0 +1,203 @@
+{
+  "definitions": {
+    "moduleRef": {
+      "metadata": {
+        "description": "A reference to a module defined somewhere else"
+      },
+      "properties": {
+        "name": {
+          "metadata": {
+            "description": "The referenced module's name"
+          },
+          "type": "string"
+        },
+        "version": {
+          "metadata": {
+            "description": "The referenced module's version"
+          },
+          "type": "string"
+        }
+      }
+    },
+    "dataType": {
+      "metadata": {
+        "description": "The definition of a data type"
+      },
+      "properties": {
+        "name": {
+          "metadata": {
+            "description": "The data type's name"
+          },
+          "type": "string"
+        },
+        "struct": {
+          "metadata": {
+            "description": "A JSON Type Definition describing the data type's structure"
+          }
+        }
+      }
+    },
+    "dataTypeRef": {
+      "metadata": {
+        "description": "A reference to a data type defined somewhere else"
+      },
+      "properties": {
+        "name": {
+          "metadata": {
+            "description": "The referenced data type's name"
+          },
+          "type": "string"
+        }
+      },
+      "optionalProperties": {
+        "module": {
+          "metadata": {
+            "description": "The module in which the referenced data type is defined. This can be omitted when used inside the module that defines the referenced data type."
+          },
+          "ref": "moduleRef"
+        }
+      }
+    },
+    "argumentType": {
+      "metadata": {
+        "description": "The type of a function argument"
+      },
+      "optionalProperties": {
+        "import": {
+          "metadata": {
+            "description": "Use a predefined data type, either from this module or another one, as opposed to a built in data type"
+          },
+          "ref": "dataTypeRef"
+        },
+        "builtin": {
+          "metadata": {
+            "description": "A built in data type, i.e. one that is part of the node standard library, like 'string', 'number[]' etc."
+          },
+          "type": "string"
+        }
+      }
+    },
+    "argument": {
+      "metadata": {
+        "description": "A function argument"
+      },
+      "properties": {
+        "name": {
+          "metadata": {
+            "description": "The argument's name"
+          },
+          "type": "string"
+        },
+        "type": {
+          "metadata": {
+            "description": "The argument's data type"
+          },
+          "ref": "argumentType"
+        }
+      }
+    },
+    "function": {
+      "metadata": {
+        "description": "A function exposed by a service that can be invoked via RPC"
+      },
+      "properties": {
+        "name": {
+          "metadata": {
+            "description": "The function's name"
+          },
+          "type": "string"
+        }
+      },
+      "optionalProperties": {
+        "arguments": {
+          "metadata": {
+            "description": "Arguments that can be passed to this function. May be omitted if the function takes no arguments"
+          },
+
+          "elements": { "ref": "argument" }
+        },
+        "returnType": {
+          "metadata": {
+            "description": "The function's return type. An object of this type will be published on the function's response topic once the function completes"
+          },
+          "ref": "argumentType"
+        }
+      }
+    },
+    "interface": {
+      "metadata": {
+        "description": "An interface, resembling a set of functions that make up a service's capabilities"
+      },
+      "properties": {
+        "name": {
+          "metadata": {
+            "description": "The interface's name"
+          },
+          "type": "string"
+        },
+        "functions": {
+          "metadata": {
+            "description": "The functions provided by services implementing this interface"
+          },
+          "elements": {
+            "ref": "function"
+          }
+        }
+      }
+    },
+    "interfaceRef": {
+      "metadata": {
+        "description": "A reference to an interface defined somewhere else"
+      },
+      "properties": {
+        "name": {
+          "metadata": {
+            "description": "The referenced interface's name"
+          },
+          "type": "string"
+        }
+      },
+      "optionalProperties": {
+        "module": {
+          "metadata": {
+            "description": "The module in which the referenced interface is defined. This can be omitted when used inside the module that defines the referenced interface"
+          },
+          "ref": "moduleRef"
+        }
+      }
+    },
+    "service": {
+      "properties": {
+        "name": { "type": "string" },
+        "interfaces": { "elements": { "ref": "interfaceRef" } }
+      },
+      "optionalProperties": {
+        "properties": { "values": { "type": "string" } }
+      }
+    }
+  },
+  "discriminator": "moduleType",
+  "mapping": {
+    "API": {
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" }
+      },
+      "optionalProperties": {
+        "dependencies": { "values": { "type": "string" } },
+        "dataTypes": { "elements": { "ref": "dataType" } },
+        "interfaces": { "elements": { "ref": "interface" } }
+      },
+      "additionalProperties": true
+    },
+    "SERVICE_PROVIDER": {
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "dependencies": { "values": { "type": "string" } },
+        "services": { "elements": { "ref": "service" } }
+      },
+      "additionalProperties": true
+    }
+  }
+}
