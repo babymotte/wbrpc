@@ -1,0 +1,31 @@
+{
+  "name": "@babymotte/wbsr-example-service",
+  "version": "1.0.0",
+  "description": "An example for a WBSR service module",
+  "author": {
+    "name": "Michael Bachmann",
+    "email": "mbachmann@bbmsoft.net"
+  },
+  "license": "MIT",
+  "moduleType": "SERVICE_PROVIDER",
+  "dependencies": {
+    "@babymotte/wbsr-example-api": "^1.0.0"
+  },
+  "services": [
+    {
+      "name": "MyGreeterService",
+      "interfaces": [
+        {
+          "name": "Greeter",
+          "module": {
+            "name": "@babymotte/wbsr-example-api",
+            "version": "1.0.0"
+          }
+        }
+      ],
+      "properties": {
+        "hello": "world"
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "name": "@babymotte/wbsr-example-api",
+  "version": "1.0.0",
+  "description": "An example for a WBSR api module",
+  "author": {
+    "name": "Michael Bachmann",
+    "email": "mbachmann@bbmsoft.net"
+  },
+  "license": "MIT",
+  "moduleType": "API",
+  "dataTypes": [
+    {
+      "name": "Greeting",
+      "struct": {
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "greetee": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Greeter",
+      "functions": [
+        {
+          "name": "sayHello",
+          "arguments": [
+            {
+              "name": "greeting",
+              "type": {
+                "import": {
+                  "name": "Greeting"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
