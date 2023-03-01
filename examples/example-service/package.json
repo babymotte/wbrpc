@@ -17,10 +17,7 @@
       "interfaces": [
         {
           "name": "Greeter",
-          "module": {
-            "name": "@babymotte/wbsr-example-api",
-            "version": "1.0.0"
-          }
+          "module": "@babymotte/wbsr-example-api"
         }
       ],
       "properties": {
