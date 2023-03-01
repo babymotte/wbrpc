@@ -7,21 +7,30 @@ import {
   Interface,
   InterfaceRef,
   ModuleApi,
-  ModuleRef,
+  ModuleComponent,
   ModuleServiceProvider,
-  Service,
 } from "./module.jtd";
 
 const fs = require("fs");
 
-const index = `import { wbsrInit, ModuleServiceProvider, ServiceInstance } from "wbsr-js";
+const componentIndex = `import { wbsrInitComponent, ModuleComponent, ServiceInstance } from "wbsr-js";
+
+const packageJson: ModuleComponent = require("../package.json");
+const moduleComponent = packageJson.component;
+const serviceReferences = packageJson.serviceReferences;
+const { component } = require(\`./\${moduleComponent}\`);
+
+wbsrInitComponent(moduleComponent, serviceReferences, component);
+`;
+
+const serviceIndex = `import { wbsrInitService, ModuleServiceProvider, ServiceInstance } from "wbsr-js";
 
 const packageJson: ModuleServiceProvider = require("../package.json");
 const moduleService = packageJson.service;
 const serviceReferences = packageJson.serviceReferences;
 const { service } = require(\`./\${moduleService.name}\`);
 
-wbsrInit(moduleService, serviceReferences, service);
+wbsrInitService(moduleService, serviceReferences, service);
 `;
 
 const srcDir = path.join(".", "src");
@@ -31,26 +40,66 @@ if (!fs.existsSync(srcDir)) {
 }
 
 const indexFile = path.join(srcDir, "index.ts");
-fs.writeFile(indexFile, index, (err: any) => {
-  if (err) {
-    throw new Error(`Could not write generated index.ts file: ${err}`);
-  }
-});
 
 fs.readFile("./package.json", "utf8", (err: any, data: string) => {
   if (err) {
     console.error(err);
     return;
   }
-  const pkg: ModuleServiceProvider = JSON.parse(data);
-  const serviceDeclaration = pkg.service;
-  generateServiceFile(serviceDeclaration, pkg);
+  const pkg: ModuleServiceProvider | ModuleComponent = JSON.parse(data);
+  if (pkg.moduleType == "COMPONENT") {
+    fs.writeFile(indexFile, componentIndex, (err: any) => {
+      if (err) {
+        throw new Error(`Could not write generated index.ts file: ${err}`);
+      }
+    });
+    generateComponentFile(pkg);
+  }
+  if (pkg.moduleType == "SERVICE_PROVIDER") {
+    fs.writeFile(indexFile, serviceIndex, (err: any) => {
+      if (err) {
+        throw new Error(`Could not write generated index.ts file: ${err}`);
+      }
+    });
+    generateServiceFile(pkg);
+  }
 });
 
-function generateServiceFile(svc: Service, pkg: ModuleServiceProvider) {
+function generateComponentFile(pkg: ModuleComponent) {
+  const code = `import { Runtime, ComponentInstance } from "wbsr-js";
+  
+export function component(runtime: Runtime): ComponentInstance {
+  const activate = () => {
+    console.log("${pkg.component} activated.");
+    // TODO auto-generated method stub
+  };
+
+  const deactivate = () => {
+    console.log("${pkg.component} deactivated.");
+    // TODO auto-generated method stub
+  };
+
+  return { activate, deactivate };
+}
+`;
+
+  const filePath = path.join(path.join(".", "src"), `${pkg.component}.ts`);
+
+  fs.writeFile(filePath, code, (err: any) => {
+    if (err) {
+      throw new Error(
+        `Could not write generated source file '${filePath}': ${err}`
+      );
+    }
+  });
+}
+
+function generateServiceFile(pkg: ModuleServiceProvider) {
   const functions: string[] = [];
   const functionNames: string[] = [];
   const imports: string[] = [];
+
+  const svc = pkg.service;
 
   for (const ifaceRef of svc.interfaces) {
     const iface = loadInterface(ifaceRef);

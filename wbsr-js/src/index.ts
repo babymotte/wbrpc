@@ -11,7 +11,7 @@ import {
   ServiceReference,
 } from "./module.jtd";
 
-export { ModuleServiceProvider } from "./module.jtd";
+export { ModuleServiceProvider, ModuleComponent } from "./module.jtd";
 
 const EXIT_CODES = {
   DISCONNECTED: 1,
@@ -24,12 +24,45 @@ export type ServiceInstance = {
   functions: any;
 };
 
+export type ComponentInstance = {
+  activate?: () => void;
+  deactivate?: () => void;
+};
+
 export type Runtime = {
   wb: Connection;
   context: any;
 };
 
-export async function wbsrInit(
+export async function wbsrInitComponent(
+  componentName: string,
+  references: ServiceReference[] | undefined,
+  componentConstructor: (runtime: Runtime) => ComponentInstance
+) {
+  console.log("Initializing WBSR runtime …");
+
+  const wbAddress = process.argv[2] || "ws://worterbuch.local/ws";
+  const wb = connect(wbAddress);
+  // TODO last will and grave goods
+  wb.onclose = () => process.exit(EXIT_CODES.DISCONNECTED);
+  wb.onhandshake = async () => {
+    console.log("Worterbuch connection established, resolving services …");
+    await resolveServiceDependencies(references);
+    console.log(
+      "Dependecies of service",
+      componentName,
+      "resolved, initializing service …"
+    );
+    const runtime = { wb, context: {} };
+    const serviceInstance = componentConstructor(runtime);
+    if (serviceInstance.activate) {
+      serviceInstance.activate();
+    }
+    // TODO
+  };
+}
+
+export async function wbsrInitService(
   serviceDeclaration: Service,
   references: ServiceReference[] | undefined,
   serviceConstructor: (runtime: Runtime) => ServiceInstance
@@ -42,7 +75,7 @@ export async function wbsrInit(
   wb.onclose = () => process.exit(EXIT_CODES.DISCONNECTED);
   wb.onhandshake = async () => {
     console.log("Worterbuch connection established, resolving services …");
-    await resolveServiceDependencies(serviceDeclaration, references);
+    await resolveServiceDependencies(references);
     console.log(
       "Dependecies of service",
       serviceDeclaration.name,
@@ -58,15 +91,8 @@ export async function wbsrInit(
 }
 
 async function resolveServiceDependencies(
-  serviceDeclaration: Service,
   references: ServiceReference[] | undefined
 ) {
-  console.log(
-    "Resolving dependencies of service",
-    serviceDeclaration.name,
-    "…"
-  );
-
   if (!references) {
     return;
   }

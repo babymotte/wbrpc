@@ -232,7 +232,8 @@
     "COMPONENT": {
       "properties": {
         "name": { "type": "string" },
-        "version": { "type": "string" }
+        "version": { "type": "string" },
+        "component": { "type": "string" }
       },
       "optionalProperties": {
         "dependencies": { "values": { "type": "string" } },

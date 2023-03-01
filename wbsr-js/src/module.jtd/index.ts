@@ -13,6 +13,7 @@ export interface ModuleApi {
 
 export interface ModuleComponent {
   moduleType: "COMPONENT";
+  component: string;
   name: string;
   version: string;
   dependencies?: { [key: string]: string };
