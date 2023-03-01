@@ -23,7 +23,7 @@ export interface ModuleServiceProvider {
   moduleType: "SERVICE_PROVIDER";
   dependencies: { [key: string]: string };
   name: string;
-  services: Service[];
+  service: Service;
   version: string;
   serviceReferences?: ServiceReference[];
 }

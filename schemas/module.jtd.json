@@ -220,7 +220,7 @@
         "name": { "type": "string" },
         "version": { "type": "string" },
         "dependencies": { "values": { "type": "string" } },
-        "services": { "elements": { "ref": "service" } }
+        "service": { "ref": "service" }
       },
       "optionalProperties": {
         "serviceReferences": {

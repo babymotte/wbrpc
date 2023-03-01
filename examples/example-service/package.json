@@ -11,18 +11,16 @@
   "dependencies": {
     "@babymotte/wbsr-example-api": "^1.0.0"
   },
-  "services": [
-    {
-      "name": "MyGreeterService",
-      "interfaces": [
-        {
-          "name": "Greeter",
-          "module": "@babymotte/wbsr-example-api"
-        }
-      ],
-      "properties": {
-        "hello": "world"
+  "service": {
+    "name": "MyGreeterService",
+    "interfaces": [
+      {
+        "name": "Greeter",
+        "module": "@babymotte/wbsr-example-api"
       }
+    ],
+    "properties": {
+      "hello": "world"
     }
-  ]
+  }
 }

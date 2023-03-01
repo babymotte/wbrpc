@@ -8,6 +8,7 @@ import {
   ModuleRef,
   ModuleServiceProvider,
   Service,
+  ServiceReference,
 } from "./module.jtd";
 
 export { ModuleServiceProvider } from "./module.jtd";
@@ -28,47 +29,49 @@ export type Runtime = {
   context: any;
 };
 
-export function loadServices(packageJson: ModuleServiceProvider) {
-  return packageJson.services;
-}
-
-export async function wbsrInit(services: Map<Service, () => ServiceInstance>) {
-  console.log("Initializing WBSR runtime …");
-  return new Promise((resolve, reject) => runModule(services, resolve, reject));
-}
-
-function runModule(
-  services: Map<Service, (runtime: Runtime) => ServiceInstance>,
-  resolve: (value: any) => void,
-  reject: (reason: any) => void
+export async function wbsrInit(
+  serviceDeclaration: Service,
+  references: ServiceReference[] | undefined,
+  serviceConstructor: (runtime: Runtime) => ServiceInstance
 ) {
+  console.log("Initializing WBSR runtime …");
+
   const wbAddress = process.argv[2] || "ws://worterbuch.local/ws";
   const wb = connect(wbAddress);
+  // TODO last will and grave goods
   wb.onclose = () => process.exit(EXIT_CODES.DISCONNECTED);
   wb.onhandshake = async () => {
     console.log("Worterbuch connection established, resolving services …");
-    services.forEach(async (serviceConstructor, serviceDeclaration) => {
-      await resolveServiceDependencies(serviceDeclaration);
-      console.log(
-        "Dependecies of service",
-        serviceDeclaration.name,
-        "resolved, initializing service …"
-      );
-      const runtime = { wb, context: {} };
-      const serviceInstance = serviceConstructor(runtime);
-      if (serviceInstance.activate) {
-        serviceInstance.activate();
-      }
-    });
+    await resolveServiceDependencies(serviceDeclaration, references);
+    console.log(
+      "Dependecies of service",
+      serviceDeclaration.name,
+      "resolved, initializing service …"
+    );
+    const runtime = { wb, context: {} };
+    const serviceInstance = serviceConstructor(runtime);
+    if (serviceInstance.activate) {
+      serviceInstance.activate();
+    }
     // TODO
   };
 }
 
-async function resolveServiceDependencies(serviceDeclaration: Service) {
+async function resolveServiceDependencies(
+  serviceDeclaration: Service,
+  references: ServiceReference[] | undefined
+) {
   console.log(
     "Resolving dependencies of service",
     serviceDeclaration.name,
     "…"
   );
+
+  if (!references) {
+    return;
+  }
+
+  console.log(references);
+
   // TODO
 }

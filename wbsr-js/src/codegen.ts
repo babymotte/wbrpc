@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from "child_process";
-import { fstat } from "fs";
 import path from "path";
-import { connect, Connection } from "worterbuch-js";
 import {
   DataType,
   Interface,
@@ -17,19 +15,14 @@ import {
 const fs = require("fs");
 
 const index = `import { wbsrInit, ModuleServiceProvider, ServiceInstance } from "wbsr-js";
-  import { Service } from "wbsr-js/dist/module.jtd";
-  
-  const services = new Map<Service, () => ServiceInstance>();
-  
-  const packageJson: ModuleServiceProvider = require("../package.json");
-  const moduleServices = packageJson.services;
-  for (const svc of moduleServices) {
-    const { service } = require(\`./\${svc.name}\`);
-    services.set(svc, service);
-  }
-  
-  wbsrInit(services);
-  `;
+
+const packageJson: ModuleServiceProvider = require("../package.json");
+const moduleService = packageJson.service;
+const serviceReferences = packageJson.serviceReferences;
+const { service } = require(\`./\${moduleService.name}\`);
+
+wbsrInit(moduleService, serviceReferences, service);
+`;
 
 const srcDir = path.join(".", "src");
 
@@ -50,10 +43,8 @@ fs.readFile("./package.json", "utf8", (err: any, data: string) => {
     return;
   }
   const pkg: ModuleServiceProvider = JSON.parse(data);
-  const serviceDeclarations = pkg.services;
-  for (const svc of serviceDeclarations) {
-    generateServiceFile(svc, pkg);
-  }
+  const serviceDeclaration = pkg.service;
+  generateServiceFile(serviceDeclaration, pkg);
 });
 
 function generateServiceFile(svc: Service, pkg: ModuleServiceProvider) {
