@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
+import { spawn } from "child_process";
 import { fstat } from "fs";
 import path from "path";
 import { connect, Connection } from "worterbuch-js";
 import {
+  DataType,
   Interface,
   InterfaceRef,
   ModuleApi,
@@ -29,7 +31,13 @@ const index = `import { wbsrInit, ModuleServiceProvider, ServiceInstance } from 
   wbsrInit(services);
   `;
 
-const indexFile = path.join(path.join(".", "src"), "index.ts");
+const srcDir = path.join(".", "src");
+
+if (!fs.existsSync(srcDir)) {
+  fs.mkdirSync(srcDir);
+}
+
+const indexFile = path.join(srcDir, "index.ts");
 fs.writeFile(indexFile, index, (err: any) => {
   if (err) {
     throw new Error(`Could not write generated index.ts file: ${err}`);
@@ -71,14 +79,9 @@ function generateServiceFile(svc: Service, pkg: ModuleServiceProvider) {
             type = arg.type.builtin;
           } else if (arg.type.import) {
             const { name, module } = arg.type.import;
-            if (!module) {
-              throw new Error(
-                `Data type reference '${name}' is missing a module declaration.`
-              );
-            }
-            generateTypes(module);
+            generateTypes(module || ifaceRef.module);
             type = name;
-            imports.push(`import { ${type} from "./${module.name}"}`);
+            imports.push(`import { ${type} } from "./${name}";`);
           } else {
             throw new Error(`No type defined for argument '${arg.name}'`);
           }
@@ -86,32 +89,32 @@ function generateServiceFile(svc: Service, pkg: ModuleServiceProvider) {
         }
       }
       const code = `  const ${fun.name} = (${args.join(", ")}) => {
-      // TODO auto-generated method stub
-    };`;
+    // TODO auto-generated method stub
+  };`;
       functions.push(code);
       functionNames.push(fun.name);
     }
   }
 
   const code = `import { Runtime, ServiceInstance } from "wbsr-js";
-  ${imports.join("\n")}
+${imports.join("\n")}
   
-  export function service(runtime: Runtime): ServiceInstance {
-    const activate = () => {
-      console.log("${svc.name} activated.");
-      // TODO auto-generated method stub
-    }
+export function service(runtime: Runtime): ServiceInstance {
+  const activate = () => {
+    console.log("${svc.name} activated.");
+    // TODO auto-generated method stub
+  };
+
+  const deactivate = () => {
+    console.log("${svc.name} deactivated.");
+    // TODO auto-generated method stub
+  };
     
-    const deactivate = () => {
-      console.log("${svc.name} deactivated.");
-      // TODO auto-generated method stub
-    }
-    
-  ${functions.join("\n\n")}
-    
-    return { activate, deactivate, functions: { ${functionNames.join(", ")} } };
-  }
-  `;
+${functions.join("\n\n")}
+
+  return { activate, deactivate, functions: { ${functionNames.join(", ")} } };
+}
+`;
 
   const filePath = path.join(path.join(".", "src"), `${svc.name}.ts`);
 
@@ -131,7 +134,7 @@ function loadInterface(ifaceRef: InterfaceRef): Interface | undefined {
       `Interface reference '${name}' is missing a module declaration.`
     );
   }
-  const [scope, moduleName] = module.name.split("/");
+  const [scope, moduleName] = module.split("/");
   const moduleManifest = path.join(
     path.join(path.join(path.join(".", "node_modules"), scope), moduleName),
     "package.json"
@@ -141,9 +144,7 @@ function loadInterface(ifaceRef: InterfaceRef): Interface | undefined {
   try {
     data = fs.readFileSync(moduleManifest, "utf8");
   } catch (err) {
-    if (err) {
-      throw new Error(`Could not load manifest of module '${name}': ${err}`);
-    }
+    throw new Error(`Could not load manifest of module '${name}': ${err}`);
   }
 
   const apiModule: ModuleApi = JSON.parse(data);
@@ -156,7 +157,62 @@ function loadInterface(ifaceRef: InterfaceRef): Interface | undefined {
   }
 }
 
-function generateTypes(module: ModuleRef) {
-  // TODO
-  // throw new Error("Function not implemented.");
+function generateTypes(module: string) {
+  const [scope, moduleName] = module.split("/");
+  const moduleManifest = path.join(
+    path.join(path.join(path.join(".", "node_modules"), scope), moduleName),
+    "package.json"
+  );
+
+  let data;
+  try {
+    data = fs.readFileSync(moduleManifest, "utf8");
+  } catch (err) {
+    throw new Error(`Could not load manifest of module '${module}': ${err}`);
+  }
+
+  let parsed: ModuleApi;
+  try {
+    parsed = JSON.parse(data);
+  } catch (err) {
+    throw new Error(`Could not parse manifest of module '${module}': ${err}`);
+  }
+
+  if (parsed.dataTypes) {
+    for (const dt of parsed.dataTypes) {
+      generateType(dt);
+    }
+  } else {
+    console.log("Module", module, "declares no data types");
+  }
+}
+
+function generateType(dataType: DataType) {
+  const srcDir = path.join(".", "src");
+
+  if (!fs.existsSync(srcDir)) {
+    fs.mkdirSync(srcDir);
+  }
+
+  const dtDir = path.join(srcDir, dataType.name);
+  if (!fs.existsSync(dtDir)) {
+    fs.mkdirSync(dtDir);
+  }
+
+  const codegen = spawn(
+    "jtd-codegen",
+    ["-", "--root-name", dataType.name, "--typescript-out", dtDir],
+    {
+      stdio: "pipe",
+    }
+  );
+  codegen.stdout.on("data", (data) => {
+    console.log(`${data}`);
+  });
+  codegen.stderr.on("data", (data) => {
+    console.error(`${data}`);
+  });
+
+  codegen.stdin.write(JSON.stringify(dataType.struct), console.error);
+  codegen.stdin.end();
 }

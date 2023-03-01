@@ -155,12 +155,10 @@
             "description": "The referenced interface's name"
           },
           "type": "string"
-        }
-      },
-      "optionalProperties": {
+        },
         "module": {
           "metadata": {
-            "description": "The module in which the referenced interface is defined. This can be omitted when used inside the module that defines the referenced interface"
+            "description": "The module in which the referenced interface is defined"
           },
           "type": "string"
         }
