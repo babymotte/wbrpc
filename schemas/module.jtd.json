@@ -54,7 +54,7 @@
           "metadata": {
             "description": "The module in which the referenced data type is defined. This can be omitted when used inside the module that defines the referenced data type."
           },
-          "ref": "moduleRef"
+          "type": "string"
         }
       }
     },
@@ -174,6 +174,33 @@
       "optionalProperties": {
         "properties": { "values": { "type": "string" } }
       }
+    },
+    "serviceReference": {
+      "properties": {
+        "name": {
+          "metadata": {
+            "description": "The the name of the referenced service interface."
+          },
+          "type": "string"
+        },
+        "module": {
+          "metadata": {
+            "description": "The module in which the referenced service interface is defined."
+          },
+          "type": "string"
+        }
+      },
+      "optionalProperties": {
+        "cardinality": {
+          "enum": ["AT_LEAST_ONE", "MANDATORY", "MULTIPLE", "OPTIONAL"]
+        },
+        "policy": { "enum": ["STATIC", "DYNAMIC"] },
+        "properties": {
+          "elements": {
+            "values": { "type": "string" }
+          }
+        }
+      }
     }
   },
   "discriminator": "moduleType",
@@ -196,6 +223,24 @@
         "version": { "type": "string" },
         "dependencies": { "values": { "type": "string" } },
         "services": { "elements": { "ref": "service" } }
+      },
+      "optionalProperties": {
+        "serviceReferences": {
+          "elements": { "ref": "serviceReference" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "COMPONENT": {
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" }
+      },
+      "optionalProperties": {
+        "dependencies": { "values": { "type": "string" } },
+        "serviceReferences": {
+          "elements": { "ref": "serviceReference" }
+        }
       },
       "additionalProperties": true
     }
