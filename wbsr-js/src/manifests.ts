@@ -1,6 +1,8 @@
 import path from "path";
 import fs from "fs";
 import {
+  Interface,
+  InterfaceRef,
   ModuleApi,
   ModuleComponent,
   ModuleServiceProvider,
@@ -49,4 +51,17 @@ function loadManifestFromDir(
   }
 
   return parsed;
+}
+
+export function getIface(
+  ifaceRef: InterfaceRef,
+  manifest: ModuleApi
+): Interface | undefined {
+  if (manifest.interfaces) {
+    for (const iface of manifest.interfaces) {
+      if (iface.name === ifaceRef.name) {
+        return iface;
+      }
+    }
+  }
 }

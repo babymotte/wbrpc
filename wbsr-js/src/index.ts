@@ -1,5 +1,5 @@
 import { connect, Connection } from "worterbuch-js";
-import { loadApiManifest } from "./manifests";
+import { getIface, loadApiManifest } from "./manifests";
 import {
   Interface,
   ModuleComponent,
@@ -113,10 +113,28 @@ export async function wbsrInitService(
           serviceDeclaration.name,
           "resolved, activating service …"
         );
-        for (const iface of module.service.interfaces) {
-          const manifest = loadApiManifest(iface.module);
+
+        for (const ifaceRef of module.service.interfaces) {
+          const manifest = loadApiManifest(ifaceRef.module);
+          const iface = getIface(ifaceRef, manifest);
+          if (!iface) {
+            throw new Error(
+              `Interface ${ifaceRef.name} does not exist in module ${ifaceRef.module}`
+            );
+          }
+          for (const fun of iface.functions) {
+            wb.subscribe(
+              `wbsr/services/${ifaceRef.module}/${manifest.version}/${ifaceRef.name}/${module.name}/${module.version}/${serviceDeclaration.name}/${fun.name}`,
+              (state) => {
+                if (state.value) {
+                  serviceInstance.functions[fun.name](...state.value);
+                }
+              }
+            );
+          }
+
           wb.set(
-            `wbsr/services/${iface.module}/${manifest.version}/${iface.name}/${module.name}/${module.version}/${serviceDeclaration.name}`,
+            `wbsr/services/${ifaceRef.module}/${manifest.version}/${ifaceRef.name}/${module.name}/${module.version}/${serviceDeclaration.name}`,
             "active"
           );
         }
@@ -182,14 +200,13 @@ async function resolveDependencies(
       }
     }
     const topic = `wbsr/services/${scope}/${moduleName}/${version}/${ifaceName}/#`;
-    console.log("subscribing", topic);
 
     wb.pSubscribe(topic, (pstate) => {
       if (pstate.keyValuePairs) {
         for (const kvp of pstate.keyValuePairs) {
           if (kvp.value == "active") {
             // TODO filter by properties
-            // TODO handle multipe services
+            // TODO handle different policies/cardinalities
             const index = missingReferences.indexOf(ref);
             if (index >= 0) {
               console.log(
@@ -201,7 +218,6 @@ async function resolveDependencies(
               runtime.context[scope] = {};
               runtime.context[scope][moduleName] = {};
               runtime.context[scope][moduleName][ifaceName] = service;
-              // TODO set service stub to context
               if (missingReferences.length == 0) {
                 resolved();
               }
