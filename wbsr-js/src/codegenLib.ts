@@ -4,6 +4,7 @@ import { spawn } from "child_process";
 import path from "path";
 import { loadApiManifest, loadOwnManifest } from "./manifests";
 import {
+  ArgumentType,
   Interface,
   InterfaceRef,
   ModuleApi,
@@ -53,11 +54,33 @@ export function generateComponent(
 }
 
 function generateComponentFile(pkg: ModuleComponent) {
-  const code = `import { Runtime, ComponentInstance } from "wbsr-js";
+  if (pkg.serviceReferences) {
+    for (const ref of pkg.serviceReferences) {
+      generateInterfaces(ref.module);
+      generateTypes(ref.module);
+    }
+  }
+
+  const imports = [`import { Runtime, ComponentInstance } from "wbsr-js";`];
+
+  // TODO this works for static mandatory refs, dynamic or multiple refs need different handling
+  const references = pkg.serviceReferences
+    ? pkg.serviceReferences.map((ref) => {
+        const varName = ref.name.toLowerCase();
+        const [scope, moduleName] = ref.module.split("/");
+        const iface = ref.name;
+        imports.push(`import { ${iface} } from "${ref.module}/${iface}";`);
+        return `const ${varName} = runtime.context["${scope}"]["${moduleName}"]["${iface}"] as ${iface};`;
+      })
+    : undefined;
+
+  const code = `${imports.join("\n")}
   
 export function component(runtime: Runtime): ComponentInstance {
   const activate = () => {
-    console.log("${pkg.component} activated.");
+    console.log("${pkg.component} activated.");${
+    references ? "\n    " + references.join("\n") : ""
+  }
     // TODO auto-generated method stub
   };
 
@@ -85,6 +108,12 @@ function generateServiceFile(pkg: ModuleServiceProvider) {
   const functions: string[] = [];
   const functionNames: string[] = [];
   const imports: string[] = [];
+
+  if (pkg.serviceReferences) {
+    for (const ref of pkg.serviceReferences) {
+      generateTypes(ref.module);
+    }
+  }
 
   const svc = pkg.service;
 
@@ -127,12 +156,24 @@ function generateServiceFile(pkg: ModuleServiceProvider) {
     }
   }
 
+  // TODO this works for static mandatory refs, dynamic or multiple refs need different handling
+  const references = pkg.serviceReferences
+    ? pkg.serviceReferences.map((ref) => {
+        const varName = ref.name.toLowerCase();
+        const [scope, moduleName] = ref.module.split("/");
+        const iface = ref.name;
+        return `const ${varName} = runtime.context["${scope}"]["${moduleName}"]["${iface}"];`;
+      })
+    : undefined;
+
   const code = `import { Runtime, ServiceInstance } from "wbsr-js";
 ${imports.join("\n")}
   
 export function service(runtime: Runtime): ServiceInstance {
   const activate = () => {
-    console.log("${svc.name} activated.");
+    console.log("${svc.name} activated.");${
+    references ? "\n    " + references.join("\n") : ""
+  }
     // TODO auto-generated method stub
   };
 
@@ -177,7 +218,93 @@ function loadInterface(ifaceRef: InterfaceRef): Interface | undefined {
   }
 }
 
+function generateInterfaces(module: string) {
+  console.log("Generating interfaces from module", module, "…");
+
+  const apiModule = loadApiManifest(module);
+
+  if (apiModule.interfaces) {
+    for (const iface of apiModule.interfaces) {
+      generateInterface(apiModule.name, iface);
+    }
+  } else {
+    console.log("Module", module, "declares no data types");
+  }
+}
+
+function generateInterface(module: string, iface: Interface) {
+  const [scope, moduleName] = module.split("/");
+
+  const srcDir = path.join(".", "src");
+  if (!fs.existsSync(srcDir)) {
+    fs.mkdirSync(srcDir);
+  }
+
+  const scopeDir = path.join(srcDir, scope);
+  if (!fs.existsSync(scopeDir)) {
+    fs.mkdirSync(scopeDir);
+  }
+
+  const moduleDir = path.join(scopeDir, moduleName);
+  if (!fs.existsSync(moduleDir)) {
+    fs.mkdirSync(moduleDir);
+  }
+
+  const ifaceFile = path.join(moduleDir, iface.name + ".ts");
+  const imports: string[] = [];
+
+  const functions = iface.functions.map((fun) => {
+    const args = fun.arguments
+      ? fun.arguments.map(
+          (arg) => `${arg.name}: ${formatArgType(arg.type, imports, module)}`
+        )
+      : [];
+    const returnType = fun.returnType
+      ? formatArgType(fun.returnType, imports, module)
+      : "void";
+    return `${fun.name}: (${args.join(", ")}) => ${returnType}`;
+  });
+
+  console.log(imports);
+
+  const code = `${imports.join("\n")}
+  
+  export interface ${iface.name} {
+    ${functions.join("\n\n")}
+  }`;
+
+  fs.writeFile(ifaceFile, code, (err: any) => {
+    if (err) {
+      throw new Error(
+        `Could not write generated source file '${ifaceFile}': ${err}`
+      );
+    }
+  });
+}
+
+function formatArgType(
+  argType: ArgumentType,
+  imports: string[],
+  ifaceModule: string
+): string {
+  if (argType.builtin) {
+    return argType.builtin;
+  } else if (argType.import) {
+    imports.push(
+      `import { ${argType.import.name} } from "${
+        argType.import.module || ifaceModule
+      }/${argType.import.name}";`
+    );
+
+    return argType.import.name;
+  } else {
+    throw new Error("Argument has no type.");
+  }
+}
+
 function generateTypes(module: string) {
+  console.log("Generating types from module", module, "…");
+
   const apiModule = loadApiManifest(module);
 
   if (apiModule.dataTypes) {

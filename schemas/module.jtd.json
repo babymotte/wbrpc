@@ -76,6 +76,14 @@
           },
           "ref": "argumentType"
         }
+      },
+      "optionalProperties": {
+        "doc": {
+          "metadata": {
+            "description": "Argument documentation"
+          },
+          "type": "string"
+        }
       }
     },
     "function": {
@@ -91,12 +99,19 @@
         }
       },
       "optionalProperties": {
+        "doc": {
+          "metadata": {
+            "description": "Function documentation"
+          },
+          "type": "string"
+        },
         "arguments": {
           "metadata": {
             "description": "Arguments that can be passed to this function. May be omitted if the function takes no arguments"
           },
-
-          "elements": { "ref": "argument" }
+          "elements": {
+            "ref": "argument"
+          }
         },
         "returnType": {
           "metadata": {
@@ -125,6 +140,14 @@
             "ref": "function"
           }
         }
+      },
+      "optionalProperties": {
+        "doc": {
+          "metadata": {
+            "description": "Interface documentation"
+          },
+          "type": "string"
+        }
       }
     },
     "interfaceRef": {
@@ -148,11 +171,21 @@
     },
     "service": {
       "properties": {
-        "name": { "type": "string" },
-        "interfaces": { "elements": { "ref": "interfaceRef" } }
+        "name": {
+          "type": "string"
+        },
+        "interfaces": {
+          "elements": {
+            "ref": "interfaceRef"
+          }
+        }
       },
       "optionalProperties": {
-        "properties": { "values": { "type": "string" } }
+        "properties": {
+          "values": {
+            "type": "string"
+          }
+        }
       }
     },
     "serviceReference": {
@@ -172,12 +205,24 @@
       },
       "optionalProperties": {
         "cardinality": {
-          "enum": ["AT_LEAST_ONE", "MANDATORY", "MULTIPLE", "OPTIONAL"]
+          "enum": [
+            "AT_LEAST_ONE",
+            "MANDATORY",
+            "MULTIPLE",
+            "OPTIONAL"
+          ]
         },
-        "policy": { "enum": ["STATIC", "DYNAMIC"] },
+        "policy": {
+          "enum": [
+            "STATIC",
+            "DYNAMIC"
+          ]
+        },
         "properties": {
           "elements": {
-            "values": { "type": "string" }
+            "values": {
+              "type": "string"
+            }
           }
         }
       }
@@ -187,44 +232,80 @@
   "mapping": {
     "API": {
       "properties": {
-        "name": { "type": "string" },
-        "version": { "type": "string" }
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
       },
       "optionalProperties": {
-        "dependencies": { "values": { "type": "string" } },
+        "dependencies": {
+          "values": {
+            "type": "string"
+          }
+        },
         "dataTypes": {
           "metadata": {
             "description": "A JSON object describing data types, in which every key is the name of a data type and the value must be a valid JTD schema describing the data type's structure."
           }
         },
-        "interfaces": { "elements": { "ref": "interface" } }
+        "interfaces": {
+          "elements": {
+            "ref": "interface"
+          }
+        }
       },
       "additionalProperties": true
     },
     "SERVICE_PROVIDER": {
       "properties": {
-        "name": { "type": "string" },
-        "version": { "type": "string" },
-        "dependencies": { "values": { "type": "string" } },
-        "service": { "ref": "service" }
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "dependencies": {
+          "values": {
+            "type": "string"
+          }
+        },
+        "service": {
+          "ref": "service"
+        }
       },
       "optionalProperties": {
         "serviceReferences": {
-          "elements": { "ref": "serviceReference" }
+          "elements": {
+            "ref": "serviceReference"
+          }
         }
       },
       "additionalProperties": true
     },
     "COMPONENT": {
       "properties": {
-        "name": { "type": "string" },
-        "version": { "type": "string" },
-        "component": { "type": "string" }
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        }
       },
       "optionalProperties": {
-        "dependencies": { "values": { "type": "string" } },
+        "dependencies": {
+          "values": {
+            "type": "string"
+          }
+        },
         "serviceReferences": {
-          "elements": { "ref": "serviceReference" }
+          "elements": {
+            "ref": "serviceReference"
+          }
         }
       },
       "additionalProperties": true

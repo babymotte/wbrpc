@@ -48,6 +48,11 @@ export interface Argument {
    * The argument's data type
    */
   type: ArgumentType;
+
+  /**
+   * Argument documentation
+   */
+  doc?: string;
 }
 
 /**
@@ -99,6 +104,11 @@ export interface Function {
   arguments?: Argument[];
 
   /**
+   * Function documentation
+   */
+  doc?: string;
+
+  /**
    * The function's return type. An object of this type will be published on the
    * function's response topic once the function completes
    */
@@ -119,6 +129,11 @@ export interface Interface {
    * The interface's name
    */
   name: string;
+
+  /**
+   * Interface documentation
+   */
+  doc?: string;
 }
 
 /**
