@@ -1,6 +1,7 @@
 import { connect, Connection } from "worterbuch-js";
 import { loadApiManifest } from "./manifests";
 import {
+  Interface,
   ModuleComponent,
   ModuleServiceProvider,
   ServiceReference,
@@ -74,7 +75,8 @@ export async function wbsrInitComponent(
         if (serviceInstance.deactivate) {
           serviceInstance.deactivate();
         }
-      }
+      },
+      runtime
     );
   };
 }
@@ -138,7 +140,8 @@ export async function wbsrInitService(
           serviceInstance.deactivate();
         }
         process.exit(EXIT_CODES.DEPENDENCY_LOST);
-      }
+      },
+      runtime
     );
   };
 }
@@ -147,7 +150,8 @@ async function resolveDependencies(
   references: ServiceReference[] | undefined,
   wb: Connection,
   resolved: () => void,
-  unresolved: () => void
+  unresolved: () => void,
+  runtime: Runtime
 ) {
   if (!references || references.length === 0) {
     resolved();
@@ -156,8 +160,76 @@ async function resolveDependencies(
 
   var initialized = false;
 
+  const resolvedServices = new Map();
+
+  const missingReferences = [...references];
+
   for (const ref of references) {
+    const manifest = loadApiManifest(ref.module);
+    const [scope, moduleName] = ref.module.split("/");
+    const version = manifest.version;
+    const ifaceName = ref.name;
+    if (!manifest.interfaces) {
+      throw new Error(
+        "Interface " + ifaceName + " not defined in module " + ref.module
+      );
+    }
+    var iface: Interface;
+    for (const f of manifest.interfaces) {
+      if (f.name === ifaceName) {
+        iface = f;
+        break;
+      }
+    }
+    const topic = `wbsr/services/${scope}/${moduleName}/${version}/${ifaceName}/#`;
+    console.log("subscribing", topic);
+
+    wb.pSubscribe(topic, (pstate) => {
+      if (pstate.keyValuePairs) {
+        for (const kvp of pstate.keyValuePairs) {
+          if (kvp.value == "active") {
+            // TODO filter by properties
+            // TODO handle multipe services
+            const index = missingReferences.indexOf(ref);
+            if (index >= 0) {
+              console.log(
+                `Found service for ${ref.module}/${ref.name}: ${kvp.key}`
+              );
+              resolvedServices.set(ref, kvp.key);
+              missingReferences.splice(index, 1);
+              const service = stubService(ref, kvp.key, iface, wb);
+              runtime.context[scope] = {};
+              runtime.context[scope][moduleName] = {};
+              runtime.context[scope][moduleName][ifaceName] = service;
+              // TODO set service stub to context
+              if (missingReferences.length == 0) {
+                resolved();
+              }
+            }
+          }
+        }
+      }
+      if (pstate.deleted) {
+        // TODO handle offline service
+      }
+    });
   }
 
-  // TODO
+  function stubService(
+    ref: ServiceReference,
+    address: string,
+    iface: Interface,
+    wb: Connection
+  ) {
+    console.log("Stubbing interface", ref.name, "…");
+
+    const stub: any = {};
+
+    for (const fun of iface.functions) {
+      stub[fun.name] = (...args: any[]) =>
+        wb.publish(`${address}/${fun.name}`, args);
+    }
+
+    return stub;
+  }
 }

@@ -265,13 +265,12 @@ function generateInterface(module: string, iface: Interface) {
     return `${fun.name}: (${args.join(", ")}) => ${returnType}`;
   });
 
-  console.log(imports);
-
   const code = `${imports.join("\n")}
   
-  export interface ${iface.name} {
-    ${functions.join("\n\n")}
-  }`;
+export interface ${iface.name} {
+  ${functions.join("\n\n")}
+}
+`;
 
   fs.writeFile(ifaceFile, code, (err: any) => {
     if (err) {
