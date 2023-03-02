@@ -108,7 +108,11 @@ function generateServiceFile(pkg: ModuleServiceProvider) {
             const { name, module } = arg.type.import;
             generateTypes(module || ifaceRef.module);
             type = name;
-            imports.push(`import { ${type} } from "./${name}";`);
+            imports.push(
+              `import { ${type} } from "./${
+                module || ifaceRef.module
+              }/${name}";`
+            );
           } else {
             throw new Error(`No type defined for argument '${arg.name}'`);
           }
@@ -178,21 +182,32 @@ function generateTypes(module: string) {
 
   if (apiModule.dataTypes) {
     for (const dt of Object.keys(apiModule.dataTypes)) {
-      generateType(dt, apiModule.dataTypes[dt]);
+      generateType(apiModule.name, dt, apiModule.dataTypes[dt]);
     }
   } else {
     console.log("Module", module, "declares no data types");
   }
 }
 
-function generateType(name: string, dataType: any) {
-  const srcDir = path.join(".", "src");
+function generateType(module: string, name: string, dataType: any) {
+  const [scope, moduleName] = module.split("/");
 
+  const srcDir = path.join(".", "src");
   if (!fs.existsSync(srcDir)) {
     fs.mkdirSync(srcDir);
   }
 
-  const dtDir = path.join(srcDir, name);
+  const scopeDir = path.join(srcDir, scope);
+  if (!fs.existsSync(scopeDir)) {
+    fs.mkdirSync(scopeDir);
+  }
+
+  const moduleDir = path.join(scopeDir, moduleName);
+  if (!fs.existsSync(moduleDir)) {
+    fs.mkdirSync(moduleDir);
+  }
+
+  const dtDir = path.join(moduleDir, name);
   if (!fs.existsSync(dtDir)) {
     fs.mkdirSync(dtDir);
   }
