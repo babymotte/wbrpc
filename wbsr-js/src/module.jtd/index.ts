@@ -6,7 +6,13 @@ export interface ModuleApi {
   moduleType: "API";
   name: string;
   version: string;
-  dataTypes?: DataType[];
+
+  /**
+   * A JSON object describing data types, in which every key is the name of
+   * a data type and the value must be a valid JTD schema describing the data
+   * type's structure.
+   */
+  dataTypes?: any;
   dependencies?: { [key: string]: string };
   interfaces?: Interface[];
 }
@@ -59,21 +65,6 @@ export interface ArgumentType {
    * opposed to a built in data type
    */
   import?: DataTypeRef;
-}
-
-/**
- * The definition of a data type
- */
-export interface DataType {
-  /**
-   * The data type's name
-   */
-  name: string;
-
-  /**
-   * A JSON Type Definition describing the data type's structure
-   */
-  struct: any;
 }
 
 /**

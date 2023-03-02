@@ -8,21 +8,18 @@
   },
   "license": "MIT",
   "moduleType": "API",
-  "dataTypes": [
-    {
-      "name": "Greeting",
-      "struct": {
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "greetee": {
-            "type": "string"
-          }
+  "dataTypes": {
+    "Greeting": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "greetee": {
+          "type": "string"
         }
       }
     }
-  ],
+  },
   "interfaces": [
     {
       "name": "Greeter",

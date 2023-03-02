@@ -19,24 +19,6 @@
         }
       }
     },
-    "dataType": {
-      "metadata": {
-        "description": "The definition of a data type"
-      },
-      "properties": {
-        "name": {
-          "metadata": {
-            "description": "The data type's name"
-          },
-          "type": "string"
-        },
-        "struct": {
-          "metadata": {
-            "description": "A JSON Type Definition describing the data type's structure"
-          }
-        }
-      }
-    },
     "dataTypeRef": {
       "metadata": {
         "description": "A reference to a data type defined somewhere else"
@@ -210,7 +192,11 @@
       },
       "optionalProperties": {
         "dependencies": { "values": { "type": "string" } },
-        "dataTypes": { "elements": { "ref": "dataType" } },
+        "dataTypes": {
+          "metadata": {
+            "description": "A JSON object describing data types, in which every key is the name of a data type and the value must be a valid JTD schema describing the data type's structure."
+          }
+        },
         "interfaces": { "elements": { "ref": "interface" } }
       },
       "additionalProperties": true

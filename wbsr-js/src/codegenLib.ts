@@ -4,7 +4,6 @@ import { spawn } from "child_process";
 import path from "path";
 import { loadApiManifest, loadOwnManifest } from "./manifests";
 import {
-  DataType,
   Interface,
   InterfaceRef,
   ModuleApi,
@@ -178,29 +177,29 @@ function generateTypes(module: string) {
   const apiModule = loadApiManifest(module);
 
   if (apiModule.dataTypes) {
-    for (const dt of apiModule.dataTypes) {
-      generateType(dt);
+    for (const dt of Object.keys(apiModule.dataTypes)) {
+      generateType(dt, apiModule.dataTypes[dt]);
     }
   } else {
     console.log("Module", module, "declares no data types");
   }
 }
 
-function generateType(dataType: DataType) {
+function generateType(name: string, dataType: any) {
   const srcDir = path.join(".", "src");
 
   if (!fs.existsSync(srcDir)) {
     fs.mkdirSync(srcDir);
   }
 
-  const dtDir = path.join(srcDir, dataType.name);
+  const dtDir = path.join(srcDir, name);
   if (!fs.existsSync(dtDir)) {
     fs.mkdirSync(dtDir);
   }
 
   const codegen = spawn(
     "jtd-codegen",
-    ["-", "--root-name", dataType.name, "--typescript-out", dtDir],
+    ["-", "--root-name", name, "--typescript-out", dtDir],
     {
       stdio: "pipe",
     }
@@ -212,6 +211,6 @@ function generateType(dataType: DataType) {
     console.error(`${data}`);
   });
 
-  codegen.stdin.write(JSON.stringify(dataType.struct), console.error);
+  codegen.stdin.write(JSON.stringify(dataType), console.error);
   codegen.stdin.end();
 }
