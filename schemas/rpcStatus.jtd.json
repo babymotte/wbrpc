@@ -1,0 +1,8 @@
+{
+  "properties": {
+    "ticket": { "type": "float64" },
+    "timestamp": { "type": "timestamp" },
+    "deadline": { "type": "timestamp" },
+    "progress": { "type": "float32" }
+  }
+}

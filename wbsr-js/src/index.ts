@@ -128,6 +128,7 @@ export async function wbsrInitService(
               `wbsr/services/${ifaceRef.module}/${manifest.version}/${ifaceRef.name}/${module.name}/${module.version}/${serviceDeclaration.name}/${fun.name}`,
               (state) => {
                 if (state.value) {
+                  // TODO validate value object against Rpc schema
                   const rpc: Rpc = state.value;
                   const args = rpc.arguments ? rpc.arguments : [];
                   serviceInstance.functions[fun.name](...args);
