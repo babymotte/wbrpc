@@ -6,6 +6,7 @@ import {
   ModuleServiceProvider,
   ServiceReference,
 } from "./module.jtd";
+import { Rpc } from "./rpc.jtd";
 
 export { ModuleServiceProvider, ModuleComponent } from "./module.jtd";
 
@@ -127,7 +128,9 @@ export async function wbsrInitService(
               `wbsr/services/${ifaceRef.module}/${manifest.version}/${ifaceRef.name}/${module.name}/${module.version}/${serviceDeclaration.name}/${fun.name}`,
               (state) => {
                 if (state.value) {
-                  serviceInstance.functions[fun.name](...state.value);
+                  const rpc: Rpc = state.value;
+                  const args = rpc.arguments ? rpc.arguments : [];
+                  serviceInstance.functions[fun.name](...args);
                 }
               }
             );
@@ -239,11 +242,23 @@ async function resolveDependencies(
   ) {
     console.log("Stubbing interface", ref.name, "…");
 
+    var ticket = 0;
+
     const stub: any = {};
 
     for (const fun of iface.functions) {
-      stub[fun.name] = (...args: any[]) =>
-        wb.publish(`${address}/${fun.name}`, args);
+      stub[fun.name] = (...args: any[]) => {
+        const timestamp = new Date();
+        const deadline = new Date();
+        deadline.setSeconds(timestamp.getSeconds() + 1);
+        const rpc: Rpc = {
+          timestamp: timestamp.toISOString(),
+          deadline: deadline.toISOString(),
+          ticket: ticket++,
+          arguments: args,
+        };
+        wb.publish(`${address}/${fun.name}`, rpc);
+      };
     }
 
     return stub;
