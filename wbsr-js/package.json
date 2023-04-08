@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "description": "RPC over Wörterbuch for JavaScript/TypeScript",
   "main": "dist/index.js",
-  "bin": {
-    "wbsr-js": "dist/codegen.js"
-  },
   "scripts": {
     "generate": "node ../wbsr-generate/ ../schemas/",
     "build": "npm run generate && npx tsc"
@@ -24,7 +21,7 @@
   },
   "homepage": "https://github.com/babymotte/wbrpc#readme",
   "dependencies": {
-    "worterbuch-js": "^0.32.0"
+    "worterbuch-js": "^0.32.1"
   },
   "devDependencies": {
     "typescript": "^4.9.5",

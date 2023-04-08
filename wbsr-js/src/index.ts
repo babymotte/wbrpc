@@ -1,4 +1,4 @@
-import { connect, Connection } from "worterbuch-js";
+import { connect, Connection, Key } from "worterbuch-js";
 import { getIface, loadApiManifest } from "./manifests";
 import {
   Interface,
@@ -41,8 +41,8 @@ export async function wbsrInitComponent(
   const references = module.serviceReferences;
 
   const wbAddress = process.argv[2] || "ws://worterbuch.local/ws";
-  const wb = connect(wbAddress);
   // TODO last will and grave goods
+  const wb = connect(wbAddress, [], []);
   wb.onclose = () => process.exit(EXIT_CODES.DISCONNECTED);
   wb.onhandshake = async () => {
     console.log("Worterbuch connection established, initializing component …");
@@ -92,8 +92,24 @@ export async function wbsrInitService(
   const references = module.serviceReferences;
 
   const wbAddress = process.argv[2] || "ws://worterbuch.local/ws";
-  const wb = connect(wbAddress);
-  // TODO last will and grave goods
+
+  const graveGoods = [];
+
+  for (const ifaceRef of module.service.interfaces) {
+    const manifest = loadApiManifest(ifaceRef.module);
+    const iface = getIface(ifaceRef, manifest);
+    if (!iface) {
+      throw new Error(
+        `Interface ${ifaceRef.name} does not exist in module ${ifaceRef.module}`
+      );
+    }
+
+    graveGoods.push(
+      `wbsr/services/${ifaceRef.module}/${manifest.version}/${ifaceRef.name}/${module.name}/${module.version}/${serviceDeclaration.name}`
+    );
+  }
+
+  const wb = connect(wbAddress, [], graveGoods);
   wb.onclose = () => process.exit(EXIT_CODES.DISCONNECTED);
   wb.onhandshake = async () => {
     console.log("Worterbuch connection established, initializing service …");
