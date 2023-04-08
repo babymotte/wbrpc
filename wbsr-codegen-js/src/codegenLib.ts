@@ -14,9 +14,10 @@ import fs from "fs";
 
 const COMPONENT_INDEX = `import { wbsrInitComponent, ModuleComponent, ServiceInstance } from "wbsr-js";
 import { component } from "./{{component}}";
-import module from "./component.json";
 
-wbsrInitComponent(module as ModuleComponent, component);
+const packageJson: ModuleComponent = require("../package.json");
+
+wbsrInitComponent(packageJson, component);
 `;
 
 const SERVICE_INDEX = `import { wbsrInitService, ModuleServiceProvider } from "wbsr-js";
@@ -41,7 +42,6 @@ export function generateService(
 
 export function generateComponent(
   indexFile: string,
-  componentFile: string,
   manifest: ModuleComponent
 ) {
   const indexContent = COMPONENT_INDEX.replace(
@@ -55,17 +55,11 @@ export function generateComponent(
     version: manifest.version,
     serviceReferences: manifest.serviceReferences,
   };
-  const componentJSON = JSON.stringify(component, null, 2);
   fs.writeFile(indexFile, indexContent, (err: any) => {
     if (err) {
       throw new Error(
         `Could not write generated ${manifest.component}.ts file: ${err}`
       );
-    }
-  });
-  fs.writeFile(componentFile, componentJSON, (err: any) => {
-    if (err) {
-      throw new Error(`Could not write generated component.json file: ${err}`);
     }
   });
   generateComponentFile(manifest);

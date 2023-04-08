@@ -12,12 +12,10 @@ if (!fs.existsSync(srcDir)) {
 }
 
 const indexFile = path.join(srcDir, "index.ts");
-const componentFile = path.join(srcDir, "component.json");
-
 const manifest = loadOwnManifest();
 
 if (manifest.moduleType == "COMPONENT") {
-  generateComponent(indexFile, componentFile, manifest);
+  generateComponent(indexFile, manifest);
 }
 
 if (manifest.moduleType == "SERVICE_PROVIDER") {
