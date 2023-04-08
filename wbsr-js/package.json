@@ -7,7 +7,7 @@
     "wbsr-js": "dist/codegen.js"
   },
   "scripts": {
-    "generate": "node generate.js",
+    "generate": "node ../wbsr-generate/ ../schemas/",
     "build": "npm run generate && npx tsc"
   },
   "repository": {
