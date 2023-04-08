@@ -48,7 +48,7 @@ export async function wbsrInitComponent(
     console.log("Worterbuch connection established, initializing component …");
 
     const runtime = { wb, context: {} };
-    const serviceInstance = componentConstructor(runtime);
+    const componentInstance = componentConstructor(runtime);
 
     console.log(
       "Component initialized successfully, resolving referenced services …"
@@ -63,8 +63,8 @@ export async function wbsrInitComponent(
           componentName,
           "resolved, activating component …"
         );
-        if (serviceInstance.activate) {
-          serviceInstance.activate();
+        if (componentInstance.activate) {
+          componentInstance.activate();
         }
       },
       () => {
@@ -73,9 +73,10 @@ export async function wbsrInitComponent(
           componentName,
           "went away, deactivating component …"
         );
-        if (serviceInstance.deactivate) {
-          serviceInstance.deactivate();
+        if (componentInstance.deactivate) {
+          componentInstance.deactivate();
         }
+        process.exit(EXIT_CODES.DEPENDENCY_LOST);
       },
       runtime
     );
@@ -246,7 +247,20 @@ async function resolveDependencies(
         }
       }
       if (pstate.deleted) {
-        // TODO handle offline service
+        for (const kvp of pstate.deleted) {
+          if (kvp.value == "active") {
+            // TODO filter by properties
+            // TODO handle different policies/cardinalities
+            const index = references.indexOf(ref);
+            if (index >= 0) {
+              console.log(
+                `Lost service for ${ref.module}/${ref.name}: ${kvp.key}`
+              );
+              // TODO stop component/service only if dependnecies are no longer met
+              unresolved();
+            }
+          }
+        }
       }
     });
   }
