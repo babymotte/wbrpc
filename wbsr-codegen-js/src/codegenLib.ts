@@ -7,7 +7,6 @@ import {
   ArgumentType,
   Interface,
   InterfaceRef,
-  ModuleApi,
   ModuleComponent,
   ModuleServiceProvider,
 } from "./module.jtd";
@@ -54,7 +53,6 @@ export function generateComponent(
     component: manifest.component,
     name: manifest.name,
     version: manifest.version,
-    dependencies: manifest.dependencies,
     serviceReferences: manifest.serviceReferences,
   };
   const componentJSON = JSON.stringify(component, null, 2);
