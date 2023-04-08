@@ -1,0 +1,32 @@
+{
+  "name": "wbsr-codegen-js",
+  "version": "0.1.0",
+  "description": "WBSR code generator for JavaScript/TypeScript",
+  "bin": {
+    "wbsr-js": "dist/codegen.js"
+  },
+  "scripts": {
+    "generate": "node ../wbsr-generate/ ../schemas/",
+    "build": "npm run generate && npx tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/babymotte/wbrpc.git"
+  },
+  "author": {
+    "name": "Michael Bachmann",
+    "email": "mbachmann@bbmsoft.net"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/babymotte/wbrpc/issues"
+  },
+  "homepage": "https://github.com/babymotte/wbrpc#readme",
+  "dependencies": {
+    "worterbuch-js": "^0.32.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.13.0",
+    "typescript": "^4.9.5"
+  }
+}

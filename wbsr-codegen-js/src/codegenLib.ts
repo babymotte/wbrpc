@@ -2,7 +2,7 @@
 
 import { spawn } from "child_process";
 import path from "path";
-import { loadApiManifest, loadOwnManifest } from "./manifests";
+import { loadApiManifest } from "./manifests";
 import {
   ArgumentType,
   Interface,
@@ -14,11 +14,10 @@ import {
 import fs from "fs";
 
 const COMPONENT_INDEX = `import { wbsrInitComponent, ModuleComponent, ServiceInstance } from "wbsr-js";
+import { component } from "./{{component}}";
+import module from "./component.json";
 
-const packageJson: ModuleComponent = require("../package.json");
-const { component } = require(\`./\${packageJson.component}\`);
-
-wbsrInitComponent(packageJson, component);
+wbsrInitComponent(module as ModuleComponent, component);
 `;
 
 const SERVICE_INDEX = `import { wbsrInitService, ModuleServiceProvider } from "wbsr-js";
@@ -43,11 +42,32 @@ export function generateService(
 
 export function generateComponent(
   indexFile: string,
+  componentFile: string,
   manifest: ModuleComponent
 ) {
-  fs.writeFile(indexFile, COMPONENT_INDEX, (err: any) => {
+  const indexContent = COMPONENT_INDEX.replace(
+    "{{component}}",
+    manifest.component
+  );
+  const component = {
+    moduleType: "COMPONENT",
+    component: manifest.component,
+    name: manifest.name,
+    version: manifest.version,
+    dependencies: manifest.dependencies,
+    serviceReferences: manifest.serviceReferences,
+  };
+  const componentJSON = JSON.stringify(component, null, 2);
+  fs.writeFile(indexFile, indexContent, (err: any) => {
     if (err) {
-      throw new Error(`Could not write generated index.ts file: ${err}`);
+      throw new Error(
+        `Could not write generated ${manifest.component}.ts file: ${err}`
+      );
+    }
+  });
+  fs.writeFile(componentFile, componentJSON, (err: any) => {
+    if (err) {
+      throw new Error(`Could not write generated component.json file: ${err}`);
     }
   });
   generateComponentFile(manifest);
