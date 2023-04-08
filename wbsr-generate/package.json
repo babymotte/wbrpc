@@ -1,0 +1,25 @@
+{
+  "name": "wbsr-generate",
+  "version": "1.0.1",
+  "description": "Module generator for WBSR",
+  "main": "generate.js",
+  "bin": {
+    "wbsr-generate": "generate.js"
+  },
+  "scripts": {
+    "start": "node generate.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/babymotte/wbsr.git"
+  },
+  "author": {
+    "name": "Michael Bachmann",
+    "email": "mbachmann@bbmsoft.net"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/babymotte/wbsr/issues"
+  },
+  "homepage": "https://github.com/babymotte/wbsr#readme"
+}
